@@ -1,5 +1,7 @@
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var querystring = require("querystring");
 
 var msgpath = { host: "rest.nexmo.com", path: "/sms/json" };
@@ -17,10 +19,12 @@ var searchVerifyEndpoint = {
   host: "api.nexmo.com",
   path: "/verify/search/json"
 };
-var niEndpoint = { host: "api.nexmo.com", path: "/ni/advanced/async/json" };
+var niEndpoint = { host: "api.nexmo.com", path: "/ni/advanced//json" };
 var niBasicEndpoint = { host: "api.nexmo.com", path: "/ni/basic/json" };
 var niStandardEndpoint = { host: "api.nexmo.com", path: "/ni/standard/json" };
 var niAdvancedEndpoint = { host: "api.nexmo.com", path: "/ni/advanced/json" };
+var niAdvancedAsyncEndpoint = { host: "api.nexmo.com", path: "/ni/advanced/async/json" };
+
 var applicationsEndpoint = { host: "api.nexmo.com", path: "/v1/applications" };
 var up = {};
 var numberPattern = new RegExp("^[0-9 +()-]*$");
@@ -46,17 +50,12 @@ var ERROR_MESSAGES = {
   answerUrl: "Invalid answer URL for call",
   verifyValidation: "Missing Mandatory fields (number and/or brand)",
   checkVerifyValidation: "Missing Mandatory fields (request_id and/or code)",
-  controlVerifyValidation:
-    "Missing Mandatory fields (request_id and/or cmd-command)",
-  searchVerifyValidation:
-    "Missing Mandatory fields (request_id or request_ids)",
-  numberInsightAdvancedValidation:
-    "Missing Mandatory fields (number and/or callback url)",
+  controlVerifyValidation: "Missing Mandatory fields (request_id and/or cmd-command)",
+  searchVerifyValidation: "Missing Mandatory fields (request_id or request_ids)",
+  numberInsightAdvancedValidation: "Missing Mandatory fields (number and/or callback url)",
   numberInsightValidation: "Missing Mandatory field - number",
-  numberInsightPatternFailure:
-    "Number can contain digits and may include any or all of the following: white space, -,+, (, ).",
-  optionsNotAnObject:
-    "Options parameter should be a dictionary. Check the docs for valid properties for options",
+  numberInsightPatternFailure: "Number can contain digits and may include any or all of the following: white space, -,+, (, ).",
+  optionsNotAnObject: "Options parameter should be a dictionary. Check the docs for valid properties for options",
   applicationName: "Invalid argument: name",
   applicationType: "Invalid argument: type",
   applicationAnswerUrl: "Invalid argument: answerUrl",
@@ -65,7 +64,7 @@ var ERROR_MESSAGES = {
   product: "Invalid product. Should be one of [voice, sms]"
 };
 
-exports.initialize = function(pkey, psecret, options) {
+exports.initialize = function (pkey, psecret, options) {
   if (!pkey || !psecret) {
     throw "key and secret cannot be empty, set valid values";
   }
@@ -76,33 +75,23 @@ exports.initialize = function(pkey, psecret, options) {
   _options = options;
 };
 
-exports.sendBinaryMessage = function(sender, recipient, body, udh, callback) {
+exports.sendBinaryMessage = function (sender, recipient, body, udh, callback) {
   if (!body) {
     sendError(callback, new Error(ERROR_MESSAGES.body));
   } else if (!udh) {
     sendError(callback, new Error(ERROR_MESSAGES.udh));
   } else {
-    sendMessage(
-      {
-        from: sender,
-        to: recipient,
-        type: "binary",
-        body: body,
-        udh: udh
-      },
-      callback
-    );
+    sendMessage({
+      from: sender,
+      to: recipient,
+      type: "binary",
+      body: body,
+      udh: udh
+    }, callback);
   }
 };
 
-exports.sendWapPushMessage = function(
-  sender,
-  recipient,
-  title,
-  url,
-  validity,
-  callback
-) {
+exports.sendWapPushMessage = function (sender, recipient, title, url, validity, callback) {
   if (!title) {
     sendError(callback, new Error(ERROR_MESSAGES.title));
   } else if (!url) {
@@ -112,21 +101,18 @@ exports.sendWapPushMessage = function(
       callback = validity;
       validity = 86400000;
     }
-    sendMessage(
-      {
-        from: sender,
-        to: recipient,
-        type: "wappush",
-        title: title,
-        validity: validity,
-        url: url
-      },
-      callback
-    );
+    sendMessage({
+      from: sender,
+      to: recipient,
+      type: "wappush",
+      title: title,
+      validity: validity,
+      url: url
+    }, callback);
   }
 };
 
-exports.sendTextMessage = function(sender, recipient, message, opts, callback) {
+exports.sendTextMessage = function (sender, recipient, message, opts, callback) {
   if (!message) {
     sendError(callback, new Error(ERROR_MESSAGES.msg));
   } else {
@@ -141,7 +127,7 @@ exports.sendTextMessage = function(sender, recipient, message, opts, callback) {
   }
 };
 
-exports.sendMessage = function(opts, callback) {
+exports.sendMessage = function (opts, callback) {
   sendMessage(opts, callback);
 };
 function sendMessage(data, callback) {
@@ -152,21 +138,10 @@ function sendMessage(data, callback) {
   } else {
     var path = clone(msgpath);
     path.path += "?" + querystring.stringify(data);
-    _options.logger.info(
-      "sending message from " +
-        data.from +
-        " to " +
-        data.to +
-        " with message " +
-        data.text
-    );
-    sendRequest(path, "POST", function(err, apiResponse) {
+    _options.logger.info("sending message from " + data.from + " to " + data.to + " with message " + data.text);
+    sendRequest(path, "POST", function (err, apiResponse) {
       if (!err && apiResponse.status && apiResponse.messages[0].status > 0) {
-        sendError(
-          callback,
-          new Error(apiResponse.messages[0]["error-text"]),
-          apiResponse
-        );
+        sendError(callback, new Error(apiResponse.messages[0]["error-text"]), apiResponse);
       } else {
         if (callback) callback(err, apiResponse);
       }
@@ -184,43 +159,27 @@ function sendViaShortcode(type, recipient, messageParams, opts, callback) {
   opts = opts || {};
   var path = clone(shortcodePath);
   path.path = path.path.replace("${type}", type);
-  Object.keys(messageParams).forEach(function(key) {
+  Object.keys(messageParams).forEach(function (key) {
     opts[key] = messageParams[key];
   });
   opts.to = recipient;
   path.path += "?" + querystring.stringify(opts);
-  _options.logger.info(
-    "sending message from shortcode " +
-      type +
-      " to " +
-      recipient +
-      " with parameters " +
-      JSON.stringify(messageParams)
-  );
-  sendRequest(path, "POST", function(err, apiResponse) {
+  _options.logger.info("sending message from shortcode " + type + " to " + recipient + " with parameters " + JSON.stringify(messageParams));
+  sendRequest(path, "POST", function (err, apiResponse) {
     if (!err && apiResponse.status && apiResponse.messages[0].status > 0) {
-      sendError(
-        callback,
-        new Error(apiResponse.messages[0]["error-text"]),
-        apiResponse
-      );
+      sendError(callback, new Error(apiResponse.messages[0]["error-text"]), apiResponse);
     } else {
       if (callback) callback(err, apiResponse);
     }
   });
 }
-exports.shortcodeAlert = function(recipient, messageParams, opts, callback) {
+exports.shortcodeAlert = function (recipient, messageParams, opts, callback) {
   sendViaShortcode("alert", recipient, messageParams, opts, callback);
 };
-exports.shortcode2FA = function(recipient, messageParams, opts, callback) {
+exports.shortcode2FA = function (recipient, messageParams, opts, callback) {
   sendViaShortcode("2fa", recipient, messageParams, opts, callback);
 };
-exports.shortcodeMarketing = function(
-  recipient,
-  messageParams,
-  opts,
-  callback
-) {
+exports.shortcodeMarketing = function (recipient, messageParams, opts, callback) {
   sendViaShortcode("marketing", recipient, messageParams, opts, callback);
 };
 
@@ -233,19 +192,16 @@ function getEndpoint(action) {
 }
 
 function sendRequest(endpoint, method, callback) {
-  endpoint.path =
-    endpoint.path +
-    (endpoint.path.indexOf("?") > 0 ? "&" : "?") +
-    querystring.stringify(up);
+  endpoint.path = endpoint.path + (endpoint.path.indexOf("?") > 0 ? "&" : "?") + querystring.stringify(up);
   _options.httpClient.request(endpoint, method, callback);
 }
 
-exports.checkBalance = function(callback) {
+exports.checkBalance = function (callback) {
   var balanceEndpoint = getEndpoint("/account/get-balance");
   sendRequest(balanceEndpoint, callback);
 };
 
-exports.getPricing = function(countryCode, callback) {
+exports.getPricing = function (countryCode, callback) {
   if (!countryCode || countryCode.length !== 2) {
     sendError(callback, new Error(ERROR_MESSAGES.countrycode));
   } else {
@@ -255,28 +211,26 @@ exports.getPricing = function(countryCode, callback) {
   }
 };
 
-exports.getPhonePricing = function(product, msisdn, callback) {
-  if (!product || (product !== "sms" && product !== "voice")) {
+exports.getPhonePricing = function (product, msisdn, callback) {
+  if (!product || product !== "sms" && product !== "voice") {
     sendError(callback, new Error(ERROR_MESSAGES.product));
   } else if (!msisdn) {
     sendError(callback, new Error(ERROR_MESSAGES.msisdn));
   } else {
     var pricingEndpoint = getEndpoint("/account/get-phone-pricing/outbound");
-    pricingEndpoint.path +=
-      "/" + product + "/" + up.api_key + "/" + up.api_secret + "/" + msisdn;
+    pricingEndpoint.path += "/" + product + "/" + up.api_key + "/" + up.api_secret + "/" + msisdn;
     sendRequest(pricingEndpoint, callback);
   }
 };
 
-exports.getNumbers = function(options, callback) {
+exports.getNumbers = function (options, callback) {
   var numbersEndpoint = getEndpoint("/account/numbers");
   if (typeof options === "function") {
     callback = options;
-  } else if (typeof options === "object") {
+  } else if ((typeof options === "undefined" ? "undefined" : _typeof(options)) === "object") {
     numbersEndpoint.path = numbersEndpoint.path + "?";
     for (var key in options) {
-      numbersEndpoint.path =
-        numbersEndpoint.path + key + "=" + options[key] + "&";
+      numbersEndpoint.path = numbersEndpoint.path + key + "=" + options[key] + "&";
     }
   } else {
     sendError(callback, new Error(ERROR_MESSAGES.optionsNotAnObject));
@@ -285,7 +239,7 @@ exports.getNumbers = function(options, callback) {
   sendRequest(numbersEndpoint, callback);
 };
 
-exports.searchNumbers = function(countryCode, pattern, callback) {
+exports.searchNumbers = function (countryCode, pattern, callback) {
   if (!countryCode || countryCode.length !== 2) {
     sendError(callback, new Error(ERROR_MESSAGES.countrycode));
   } else {
@@ -293,11 +247,10 @@ exports.searchNumbers = function(countryCode, pattern, callback) {
     searchEndpoint.path += "?country=" + countryCode;
     if (typeof pattern === "function") {
       callback = pattern;
-    } else if (typeof pattern === "object") {
+    } else if ((typeof pattern === "undefined" ? "undefined" : _typeof(pattern)) === "object") {
       searchEndpoint.path = searchEndpoint.path + "&";
       for (var arg in pattern) {
-        searchEndpoint.path =
-          searchEndpoint.path + arg + "=" + pattern[arg] + "&";
+        searchEndpoint.path = searchEndpoint.path + arg + "=" + pattern[arg] + "&";
       }
     } else {
       searchEndpoint.path = searchEndpoint.path + "&pattern=" + pattern;
@@ -306,7 +259,7 @@ exports.searchNumbers = function(countryCode, pattern, callback) {
   }
 };
 
-exports.buyNumber = function(countryCode, msisdn, callback) {
+exports.buyNumber = function (countryCode, msisdn, callback) {
   if (!countryCode || countryCode.length !== 2) {
     sendError(callback, new Error(ERROR_MESSAGES.countrycode));
   } else if (!msisdn) {
@@ -318,7 +271,7 @@ exports.buyNumber = function(countryCode, msisdn, callback) {
   }
 };
 
-exports.cancelNumber = function(countryCode, msisdn, callback) {
+exports.cancelNumber = function (countryCode, msisdn, callback) {
   if (!countryCode || countryCode.length !== 2) {
     sendError(callback, new Error(ERROR_MESSAGES.countrycode));
   } else if (!msisdn) {
@@ -330,7 +283,7 @@ exports.cancelNumber = function(countryCode, msisdn, callback) {
   }
 };
 
-exports.cancelNumber = function(countryCode, msisdn, callback) {
+exports.cancelNumber = function (countryCode, msisdn, callback) {
   if (!countryCode || countryCode.length !== 2) {
     sendError(callback, new Error(ERROR_MESSAGES.countrycode));
   } else if (!msisdn) {
@@ -342,7 +295,7 @@ exports.cancelNumber = function(countryCode, msisdn, callback) {
   }
 };
 
-exports.updateNumber = function(countryCode, msisdn, params, callback) {
+exports.updateNumber = function (countryCode, msisdn, params, callback) {
   if (!countryCode || countryCode.length !== 2) {
     sendError(callback, new Error(ERROR_MESSAGES.countrycode));
   } else if (!msisdn) {
@@ -352,19 +305,18 @@ exports.updateNumber = function(countryCode, msisdn, params, callback) {
     updateEndpoint.path += "?country=" + countryCode + "&msisdn=" + msisdn;
     updateEndpoint.path = updateEndpoint.path + "&";
     for (var arg in params) {
-      updateEndpoint.path =
-        updateEndpoint.path + arg + "=" + encodeURIComponent(params[arg]) + "&";
+      updateEndpoint.path = updateEndpoint.path + arg + "=" + encodeURIComponent(params[arg]) + "&";
     }
     sendRequest(updateEndpoint, "POST", callback);
   }
 };
 
-exports.getApplications = function(options, callback) {
+exports.getApplications = function (options, callback) {
   var endpoint = getEndpoint(applicationsEndpoint.path);
   endpoint.host = applicationsEndpoint.host;
   if (typeof options === "function") {
     callback = options;
-  } else if (typeof options === "object") {
+  } else if ((typeof options === "undefined" ? "undefined" : _typeof(options)) === "object") {
     endpoint.path += "?";
     for (var key in options) {
       endpoint.path += key + "=" + options[key] + "&";
@@ -376,14 +328,7 @@ exports.getApplications = function(options, callback) {
   sendRequest(endpoint, callback);
 };
 
-exports.createApplication = function(
-  name,
-  type,
-  answerUrl,
-  eventUrl,
-  options,
-  callback
-) {
+exports.createApplication = function (name, type, answerUrl, eventUrl, options, callback) {
   if (!name || name.length < 1) {
     sendError(callback, new Error(ERROR_MESSAGES.applicationName));
   } else if (!type) {
@@ -395,15 +340,7 @@ exports.createApplication = function(
   } else {
     var createEndpoint = getEndpoint(applicationsEndpoint.path);
     createEndpoint.host = applicationsEndpoint.host;
-    createEndpoint.path +=
-      "?name=" +
-      encodeURIComponent(name) +
-      "&type=" +
-      type +
-      "&answer_url=" +
-      answerUrl +
-      "&event_url=" +
-      eventUrl;
+    createEndpoint.path += "?name=" + encodeURIComponent(name) + "&type=" + type + "&answer_url=" + answerUrl + "&event_url=" + eventUrl;
     for (var key in options) {
       createEndpoint.path += "&" + key + "=" + options[key];
     }
@@ -411,7 +348,7 @@ exports.createApplication = function(
   }
 };
 
-exports.getApplication = function(appId, callback) {
+exports.getApplication = function (appId, callback) {
   if (!appId || appId.length < 36) {
     sendError(callback, new Error(ERROR_MESSAGES.applicationId));
   } else {
@@ -421,15 +358,7 @@ exports.getApplication = function(appId, callback) {
   }
 };
 
-exports.updateApplication = function(
-  appId,
-  name,
-  type,
-  answerUrl,
-  eventUrl,
-  options,
-  callback
-) {
+exports.updateApplication = function (appId, name, type, answerUrl, eventUrl, options, callback) {
   if (!appId || appId.length < 36) {
     sendError(callback, new Error(ERROR_MESSAGES.applicationId));
   } else if (!name || name.length < 1) {
@@ -442,25 +371,16 @@ exports.updateApplication = function(
     sendError(callback, new Error(ERROR_MESSAGES.applicationEventUrl));
   } else {
     var updateEndpoint = getEndpoint(applicationsEndpoint.path + "/" + appId);
-    updateEndpoint.path +=
-      "?name=" +
-      encodeURIComponent(name) +
-      "&type=" +
-      type +
-      "&answer_url=" +
-      answerUrl +
-      "&event_url=" +
-      eventUrl;
+    updateEndpoint.path += "?name=" + encodeURIComponent(name) + "&type=" + type + "&answer_url=" + answerUrl + "&event_url=" + eventUrl;
     updateEndpoint.host = applicationsEndpoint.host;
     for (var key in options) {
-      updateEndpoint.path =
-        updateEndpoint.path + "&" + key + "=" + options[key];
+      updateEndpoint.path = updateEndpoint.path + "&" + key + "=" + options[key];
     }
     sendRequest(updateEndpoint, "PUT", callback);
   }
 };
 
-exports.deleteApplication = function(appId, callback) {
+exports.deleteApplication = function (appId, callback) {
   if (!appId || appId.length < 36) {
     sendError(callback, new Error(ERROR_MESSAGES.applicationId));
   } else {
@@ -470,25 +390,25 @@ exports.deleteApplication = function(appId, callback) {
   }
 };
 
-exports.changePassword = function(newSecret, callback) {
+exports.changePassword = function (newSecret, callback) {
   var settingsEndpoint = getEndpoint("/account/settings");
   settingsEndpoint.path += "?newSecret=" + encodeURIComponent(newSecret);
   sendRequest(settingsEndpoint, "POST", callback);
 };
 
-exports.changeMoCallbackUrl = function(newUrl, callback) {
+exports.changeMoCallbackUrl = function (newUrl, callback) {
   var settingsEndpoint = getEndpoint("/account/settings");
   settingsEndpoint.path += "?moCallBackUrl=" + encodeURIComponent(newUrl);
   sendRequest(settingsEndpoint, "POST", callback);
 };
 
-exports.changeDrCallbackUrl = function(newUrl, callback) {
+exports.changeDrCallbackUrl = function (newUrl, callback) {
   var settingsEndpoint = getEndpoint("/account/settings");
   settingsEndpoint.path += "?drCallBackUrl=" + encodeURIComponent(newUrl);
   sendRequest(settingsEndpoint, "POST", callback);
 };
 
-exports.verifyNumber = function(inputParams, callback) {
+exports.verifyNumber = function (inputParams, callback) {
   if (!inputParams.number || !inputParams.brand) {
     sendError(callback, new Error(ERROR_MESSAGES.verifyValidation));
   } else {
@@ -498,7 +418,7 @@ exports.verifyNumber = function(inputParams, callback) {
   }
 };
 
-exports.checkVerifyRequest = function(inputParams, callback) {
+exports.checkVerifyRequest = function (inputParams, callback) {
   if (!inputParams.request_id || !inputParams.code) {
     sendError(callback, new Error(ERROR_MESSAGES.checkVerifyValidation));
   } else {
@@ -508,7 +428,7 @@ exports.checkVerifyRequest = function(inputParams, callback) {
   }
 };
 
-exports.controlVerifyRequest = function(inputParams, callback) {
+exports.controlVerifyRequest = function (inputParams, callback) {
   if (!inputParams.request_id || !inputParams.cmd) {
     sendError(callback, new Error(ERROR_MESSAGES.controlVerifyValidation));
   } else {
@@ -518,7 +438,7 @@ exports.controlVerifyRequest = function(inputParams, callback) {
   }
 };
 
-exports.searchVerifyRequest = function(requestIds, callback) {
+exports.searchVerifyRequest = function (requestIds, callback) {
   var requestIdParam = {};
   if (!requestIds) {
     sendError(callback, new Error(ERROR_MESSAGES.searchVerifyValidation));
@@ -538,34 +458,31 @@ exports.searchVerifyRequest = function(requestIds, callback) {
   }
 };
 
-exports.numberInsight = function(inputParams, callback) {
+exports.numberInsight = function (inputParams, callback) {
   numberInsightAsync(inputParams, callback);
 };
 
-exports.numberInsightBasic = function(inputParams, callback) {
+exports.numberInsightBasic = function (inputParams, callback) {
   numberInsightCommon(niBasicEndpoint, inputParams, callback);
 };
 
-exports.numberInsightStandard = function(inputParams, callback) {
+exports.numberInsightStandard = function (inputParams, callback) {
   numberInsightCommon(niStandardEndpoint, inputParams, callback);
 };
 
-exports.numberInsightAdvanced = function(inputParams, callback) {
+exports.numberInsightAdvanced = function (inputParams, callback) {
   numberInsightCommon(niAdvancedEndpoint, inputParams, callback);
 };
 
-exports.numberInsightAdvancedAsync = function(inputParams, callback) {
+exports.numberInsightAdvancedAsync = function (inputParams, callback) {
   numberInsightAsync(inputParams, callback);
 };
 
 function numberInsightAsync(inputParams, callback) {
   if (!inputParams.number || !inputParams.callback) {
-    sendError(
-      callback,
-      new Error(ERROR_MESSAGES.numberInsightAdvancedValidation)
-    );
+    sendError(callback, new Error(ERROR_MESSAGES.numberInsightAdvancedValidation));
   } else {
-    var nEndpoint = clone(niEndpoint);
+    var nEndpoint = clone(niAdvancedAsyncEndpoint);
     nEndpoint.path += "?" + querystring.stringify(inputParams);
     sendRequest(nEndpoint, callback);
   }
@@ -574,7 +491,7 @@ function numberInsightAsync(inputParams, callback) {
 function numberInsightCommon(endpoint, inputParams, callback) {
   if (validateNumber(inputParams, callback)) {
     var inputObj;
-    if (typeof inputParams !== "object") {
+    if ((typeof inputParams === "undefined" ? "undefined" : _typeof(inputParams)) !== "object") {
       inputObj = { number: inputParams };
     } else {
       inputObj = inputParams;
@@ -585,19 +502,13 @@ function numberInsightCommon(endpoint, inputParams, callback) {
   }
 }
 function validateNumber(inputParams, callback) {
-  if (typeof inputParams === "object" && !inputParams.number) {
+  if ((typeof inputParams === "undefined" ? "undefined" : _typeof(inputParams)) === "object" && !inputParams.number) {
     sendError(callback, new Error(ERROR_MESSAGES.numberInsightValidation));
     return false;
-  } else if (
-    typeof inputParams === "object" &&
-    !numberPattern.test(inputParams.number)
-  ) {
+  } else if ((typeof inputParams === "undefined" ? "undefined" : _typeof(inputParams)) === "object" && !numberPattern.test(inputParams.number)) {
     sendError(callback, new Error(ERROR_MESSAGES.numberInsightPatternFailure));
     return false;
-  } else if (
-    typeof inputParams !== "object" &&
-    (!inputParams || !numberPattern.test(inputParams))
-  ) {
+  } else if ((typeof inputParams === "undefined" ? "undefined" : _typeof(inputParams)) !== "object" && (!inputParams || !numberPattern.test(inputParams))) {
     sendError(callback, new Error(ERROR_MESSAGES.numberInsightPatternFailure));
     return false;
   }
@@ -610,10 +521,8 @@ function sendVoiceMessage(voiceEndpoint, data, callback) {
   } else {
     var endpoint = clone(voiceEndpoint);
     endpoint.path += "?" + querystring.stringify(data);
-    _options.logger.info(
-      "sending TTS message to " + data.to + " with message " + data.text
-    );
-    sendRequest(endpoint, "POST", function(err, apiResponse) {
+    _options.logger.info("sending TTS message to " + data.to + " with message " + data.text);
+    sendRequest(endpoint, "POST", function (err, apiResponse) {
       if (!err && apiResponse.status && apiResponse.status > 0) {
         sendError(callback, new Error(apiResponse["error-text"]), apiResponse);
       } else {
@@ -623,7 +532,7 @@ function sendVoiceMessage(voiceEndpoint, data, callback) {
   }
 }
 
-exports.sendTTSMessage = function(recipient, message, opts, callback) {
+exports.sendTTSMessage = function (recipient, message, opts, callback) {
   if (!message) {
     sendError(callback, new Error(ERROR_MESSAGES.msg));
   } else {
@@ -636,14 +545,7 @@ exports.sendTTSMessage = function(recipient, message, opts, callback) {
   }
 };
 
-exports.sendTTSPromptWithCapture = function(
-  recipient,
-  message,
-  maxDigits,
-  byeText,
-  opts,
-  callback
-) {
+exports.sendTTSPromptWithCapture = function (recipient, message, maxDigits, byeText, opts, callback) {
   if (!message) {
     sendError(callback, new Error(ERROR_MESSAGES.msg));
   } else if (!maxDigits || isNaN(maxDigits) || maxDigits.length > 16) {
@@ -662,16 +564,7 @@ exports.sendTTSPromptWithCapture = function(
   }
 };
 
-exports.sendTTSPromptWithConfirm = function(
-  recipient,
-  message,
-  maxDigits,
-  pinCode,
-  byeText,
-  failedText,
-  opts,
-  callback
-) {
+exports.sendTTSPromptWithConfirm = function (recipient, message, maxDigits, pinCode, byeText, failedText, opts, callback) {
   if (!message) {
     sendError(callback, new Error(ERROR_MESSAGES.msg));
   } else if (!maxDigits || isNaN(maxDigits) || maxDigits.length > 16) {
@@ -696,7 +589,7 @@ exports.sendTTSPromptWithConfirm = function(
   }
 };
 
-exports.call = function(recipient, answerUrl, opts, callback) {
+exports.call = function (recipient, answerUrl, opts, callback) {
   if (!answerUrl) {
     sendError(callback, new Error(ERROR_MESSAGES.answerUrl));
   } else {
@@ -718,7 +611,7 @@ function sendError(callback, err, returnData) {
   }
 }
 
-exports.setHost = function(aHost) {
+exports.setHost = function (aHost) {
   msgpath.host = aHost;
   shortcodePath.host = aHost;
   ttsEndpoint.host = aHost;
