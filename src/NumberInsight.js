@@ -1,26 +1,38 @@
 "use strict";
 
-import nexmo from "./index";
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-class NumberInsight {
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _index = require("./index");
+
+var _index2 = _interopRequireDefault(_index);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var NumberInsight = function () {
   /**
    * @param {Credentials} credentials
    *    credentials to be used when interacting with the API.
    * @param {Object} options
    *    Addition NumberInsight options.
    */
-  constructor(credentials, options = {}) {
+  function NumberInsight(credentials) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    _classCallCheck(this, NumberInsight);
+
     this.creds = credentials;
     this.options = options;
 
     // Used to facilitate testing of the call to the underlying object
-    this._nexmo = this.options.nexmoOverride || nexmo;
+    this._nexmo = this.options.nexmoOverride || _index2.default;
 
-    this._nexmo.initialize(
-      this.creds.apiKey,
-      this.creds.apiSecret,
-      this.options
-    );
+    this._nexmo.initialize(this.creds.apiKey, this.creds.apiSecret, this.options);
   }
 
   /**
@@ -69,26 +81,30 @@ class NumberInsight {
    *                 Tells the Nexmo platform to make callbacks as soon as an
    *                 individual piece of information is retrieved.
    */
-  get(options, callback) {
-    var level = options.level;
-    // remove 'level' as it's a library-only parameter
-    delete options.level;
 
-    if (level === "advanced" || level === "advancedAsync") {
+
+  _createClass(NumberInsight, [{
+    key: "get",
+    value: function get(options, callback) {
+      var level = options.level;
+      // remove 'level' as it's a library-only parameter
+      delete options.level;
+
       if (level === "advanced") {
-        console.warn(
-          'DEPRECATION WARNING: Number Insight Advanced with a level of "advanced" will be synchronous in v2.0+. Consider using the level "advancedAsync" to keep using the async option.'
-        );
+          console.warn('DEPRECATION WARNING: Number Insight Advanced with a level of "advanced" will be synchronous in v2.0+. Consider using the level "advancedAsync" to keep using the async option.');
+          this._nexmo.numberInsightAdvanced.apply(this._nexmo, arguments);
+      } else if (level === "advancedAsync") {
+        this._nexmo.numberInsightAdvancedAsync.apply(this._nexmo, arguments);
+      } else if (level === "standard") {
+        this._nexmo.numberInsightStandard.apply(this._nexmo, arguments);
+      } else {
+        this._nexmo.numberInsightBasic.apply(this._nexmo, arguments);
       }
-      this._nexmo.numberInsightAdvancedAsync.apply(this._nexmo, arguments);
-    } else if (level === "advancedSync") {
-      this._nexmo.numberInsightAdvanced.apply(this._nexmo, arguments);
-    } else if (level === "standard") {
-      this._nexmo.numberInsightStandard.apply(this._nexmo, arguments);
-    } else {
-      this._nexmo.numberInsightBasic.apply(this._nexmo, arguments);
     }
-  }
-}
+  }]);
 
-export default NumberInsight;
+  return NumberInsight;
+}();
+
+exports.default = NumberInsight;
+module.exports = exports["default"];
